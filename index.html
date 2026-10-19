@@ -76,8 +76,9 @@ input[type=date]{font:11px "Merriweather",Georgia,serif;color:var(--ink);backgro
 .g .ev{position:absolute;margin:0;border:1px solid rgba(0,0,0,.35)}
 .dv{background:var(--card);color:var(--ink);border-radius:6px;padding:4px 6px;font-size:10.5px;font-weight:700;margin-bottom:4px;line-height:1.3;cursor:pointer}.dv small{display:block;font-weight:400;opacity:.75}
 .sw{width:18px;height:18px;padding:0;border:0;background:none;cursor:pointer;border-radius:4px}
-#pop,#bgp{position:fixed;z-index:50;background:#1d0646;color:#f3eefb;border:1px solid var(--gold);border-radius:10px;padding:10px;width:184px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-#pop[hidden],#bgp[hidden],#modal[hidden]{display:none}
+#pop,#bgp,#syn{position:fixed;z-index:50;background:#1d0646;color:#f3eefb;border:1px solid var(--gold);border-radius:10px;padding:10px;width:184px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#pop[hidden],#bgp[hidden],#syn[hidden],#modal[hidden]{display:none}
+#syn{top:64px;right:16px;width:270px}#syn label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--goldt)}#syn input{font:12px "Merriweather",Georgia,serif;color:#f3eefb;background:rgba(255,255,255,.1);border:1px solid rgba(162,141,91,.7);border-radius:7px;padding:6px 8px}.sm{font-size:11px;color:var(--goldt);overflow-wrap:anywhere}
 .pt{font-size:12px;font-weight:700;color:var(--goldt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ps{display:flex;flex-wrap:wrap;gap:6px}.ps button{width:24px;height:24px;border-radius:6px;border:1px solid rgba(255,255,255,.4);padding:0}.ps input{width:100%;height:28px;padding:0;border:0;background:none}
 .hint{font-size:12px;color:var(--goldt);max-width:70ch}
@@ -104,6 +105,7 @@ input[type=date]{font:11px "Merriweather",Georgia,serif;color:var(--ink);backgro
 <header id="head"></header>
 <main id="root"></main>
 <input type="file" id="icsf" accept=".ics,text/calendar" multiple hidden>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script>
 const KEY="gilded-kanban-v1",EV="gilded-cal-v1",ST=["Not started","Working on it","Done"],DN="SU,MO,TU,WE,TH,FR,SA".split(",");
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -125,7 +127,7 @@ if(!S)S={title:"Task Board",cols:[
   {id:uid(),text:"Write lab report",open:1,subs:[sb("Collect data",2,dd(0)),sb("Plot results",1,dd(3)),sb("Write discussion",0,dd(5))]}]},
  {id:uid(),title:"Done",tasks:[
   {id:uid(),text:"Submit scholarship form",subs:[sb("Get recommendation",2,dd(-3)),sb("Upload transcript",2,dd(-2))]}]}]};
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}mark()};
 
 /* ---- ICS (calendar view only) ---- */
 function pdt(v){const m=v.match(/^(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)(\d\d)?(Z)?)?$/);if(!m)return null;
@@ -167,7 +169,7 @@ const CATH={id:"cath",name:"Roman Catholic holidays",color:"#A28D5B",ink:"#1a054
 let cals=null;const parsed={},catCache={};
 try{cals=JSON.parse(localStorage.getItem(CK))}catch(e){}
 if(!cals)cals=[...SEED,CATH];
-const saveCals=()=>{try{localStorage.setItem(CK,JSON.stringify(cals))}catch(e){}};
+const saveCals=()=>{try{localStorage.setItem(CK,JSON.stringify(cals))}catch(e){}mark()};
 function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),t=h+l-7*m+114;return new Date(y,Math.floor(t/31)-1,t%31+1)}
 function catEvents(y){
  const E=easter(y),mk=(s,t)=>({t,s,e:addDays(s,1),ad:1,ex:[]}),o=(n,t)=>mk(addDays(E,n),t),f=(m,d,t)=>mk(new Date(y,m-1,d),t);
@@ -236,10 +238,10 @@ function cal(){
 const LS=(k,f)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?f:v}catch(e){return f}},SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let mine=LS("gilded-mine-v1",[]);const hs=LS("gilded-hid-v1",{}),hid=hs.hid||{},skips=hs.skips||{};
 mine.forEach(m=>{if(m.rep==="weekly"&&!(m.days&&m.days.length===1&&m.days[0]===pd(m.date).getDay()))m.rep="weeklyx"});
-const saveMine=()=>SV("gilded-mine-v1",mine),saveHid=()=>SV("gilded-hid-v1",{hid,skips});
+const saveMine=()=>{SV("gilded-mine-v1",mine);mark()},saveHid=()=>{SV("gilded-hid-v1",{hid,skips});mark()};
 const BGP=[["Royal Purple","#05000d","#1d0646","#5b17b8"],["Midnight Blue","#020617","#0b1a5e","#2f55d4"],["Emerald","#00110a","#08301f","#1f8a5b"],["Crimson","#0d0003","#4a0a1f","#b0356b"],["Deep Teal","#00100f","#06403f","#0e8f9a"],["Slate","#0b0d12","#232a3a","#4a5675"]];
 let bg=LS("gilded-bg-v1",null);if(!Array.isArray(bg)||bg.length!==3)bg=BGP[0].slice(1);
-const saveBg=()=>SV("gilded-bg-v1",bg),rgba=(c,a)=>{const n=parseInt(c.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
+const saveBg=()=>{SV("gilded-bg-v1",bg);mark()},rgba=(c,a)=>{const n=parseInt(c.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
 function applyBg(){const b=document.body.style;b.background=`radial-gradient(900px 520px at 88% -8%,${rgba(bg[2],.8)},transparent 62%),linear-gradient(160deg,${bg[0]} 0%,${bg[1]} 36%,${bg[2]} 72%,${bg[1]} 100%)`;b.backgroundAttachment="fixed"}
 const bgp=document.createElement("div");bgp.id="bgp";bgp.hidden=true;document.body.appendChild(bgp);
 function drawBg(){bgp.innerHTML=`<div class="pt">Page background</div><div class="ps">${BGP.map((p,i)=>`<button data-a="bgp" data-i="${i}" title="${p[0]}" aria-label="${p[0]}" style="background:linear-gradient(135deg,${p[1]},${p[2]},${p[3]});width:42px"></button>`).join("")}</div><div class="bgr">${["Darkest","Middle","Brightest"].map((n,i)=>`<label>${n}<input type="color" data-a="bgc" data-i="${i}" value="${bg[i]}"></label>`).join("")}</div><button class="btn alt" data-a="bgr">Reset</button>`}
@@ -304,7 +306,7 @@ modal.addEventListener("change",e=>{const k=e.target.dataset.m;if(k==="rep"||k==
 
 const CLK="gilded-colors-v1",PCOL=["#2f55d4","#1f8a5b","#5b17b8","#A28D5B","#e4572e","#0e8f9a","#b0356b","#c2410c"];
 let colors={},popKey=null;try{colors=JSON.parse(localStorage.getItem(CLK))||{}}catch(e){}
-const saveColors=()=>{try{localStorage.setItem(CLK,JSON.stringify(colors))}catch(e){}};
+const saveColors=()=>{try{localStorage.setItem(CLK,JSON.stringify(colors))}catch(e){}mark()};
 const inkOf=c=>{const n=parseInt(c.slice(1),16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)>135?"#1a0540":"#fff"};
 const pop=document.createElement("div");pop.id="pop";pop.hidden=true;document.body.appendChild(pop);
 function openPop(el){popKey=el.dataset.k;const r=el.getBoundingClientRect(),cur=colors[popKey]||el.dataset.def;
@@ -313,7 +315,7 @@ function openPop(el){popKey=el.dataset.k;const r=el.getBoundingClientRect(),cur=
 const root=document.getElementById("root"),head=document.getElementById("head");
 function render(){
  today=dayOf(new Date());
- head.innerHTML=`<input class="ttl" data-a="title" value="${esc(S.title)}" maxlength="60" aria-label="Page title"><nav>${[["board","Kanban"],["chart","Chart"],["cal","Calendar"]].map(v=>`<button class="tab${view===v[0]?" on":""}" data-a="tab" data-v="${v[0]}">${v[1]}</button>`).join("")}</nav><button class="tab" data-a="bg" aria-label="Page background">Background</button>`;
+ head.innerHTML=`<input class="ttl" data-a="title" value="${esc(S.title)}" maxlength="60" aria-label="Page title"><nav>${[["board","Kanban"],["chart","Chart"],["cal","Calendar"]].map(v=>`<button class="tab${view===v[0]?" on":""}" data-a="tab" data-v="${v[0]}">${v[1]}</button>`).join("")}</nav><button class="tab" data-a="bg" aria-label="Page background">Background</button><button class="tab" data-a="sync">Sync ${typeof user!=="undefined"&&user?"●":"○"}</button>`;
  root.innerHTML=view==="board"?board():view==="chart"?chart():cal();
 }
 
@@ -326,6 +328,7 @@ document.addEventListener("click",e=>{
  const ek=tg.closest("[data-k]");if(ek&&!tg.closest("#pop")){openPop(ek);return}
  if(!tg.closest("#pop"))pop.hidden=true;
  if(!tg.closest("#bgp")&&!tg.closest('[data-a="bg"]'))bgp.hidden=true;
+ if(!tg.closest("#syn")&&!tg.closest('[data-a="sync"]'))syn.hidden=true;
  const el=tg.closest("[data-a]");if(!el)return;const a=el.dataset.a,{c,f,sid}=ctx(e);
  if(a!=="delcol"&&armed){armed=null;if(!["ctitle","title","due","ttext","stext"].includes(a))render()}
  if(a==="tab"){view=el.dataset.v;render()}
@@ -340,6 +343,7 @@ document.addEventListener("click",e=>{
  else if(a==="imp")document.getElementById("icsf").click();
  else if(a==="rmcal"){cals=cals.filter(x=>x.id!==el.dataset.id);delete parsed[el.dataset.id];saveCals();render()}
  else if(a==="newev")openNew();
+ else if(a==="sync"){syn.hidden=!syn.hidden;if(!syn.hidden)drawSyn()}
  else if(a==="bg"){bgp.hidden=!bgp.hidden;if(!bgp.hidden)drawBg()}
  else if(a==="bgp"){bg=BGP[+el.dataset.i].slice(1);saveBg();applyBg();drawBg()}
  else if(a==="bgr"){bg=BGP[0].slice(1);saveBg();applyBg();drawBg()}
@@ -363,7 +367,7 @@ document.addEventListener("focusout",e=>{
  if(v&&v!==o.text){o.text=v;save()}else if(!v)render();
 });
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&["ttext","stext","ctitle","title","calname"].includes(e.target.dataset.a)){e.preventDefault();e.target.blur()}
- if(e.key==="Escape"){modal.hidden=true;bgp.hidden=true;pop.hidden=true;ed=null}});
+ if(e.key==="Escape"){syn.hidden=true;modal.hidden=true;bgp.hidden=true;pop.hidden=true;ed=null}});
 document.addEventListener("input",e=>{if(e.target.dataset.a==="bgc"){bg[+e.target.dataset.i]=e.target.value;applyBg()}});
 document.addEventListener("submit",e=>{
  e.preventDefault();const f=e.target,a=f.dataset.a,inp=f.querySelector("input"),v=inp.value.trim(),{c,f:fo}=ctx(e);if(!v)return;
@@ -383,6 +387,54 @@ document.addEventListener("dragover",e=>{const c=dragId&&e.target.closest(".col"
 document.addEventListener("dragleave",e=>{const c=e.target.closest&&e.target.closest(".col");if(c&&!c.contains(e.relatedTarget))c.classList.remove("over")});
 document.addEventListener("drop",e=>{const col=e.target.closest(".col");if(!dragId||!col)return;e.preventDefault();const b=e.target.closest(".card");moveTask(dragId,col.dataset.c,b&&b.dataset.t!==dragId?b.dataset.t:null);dragId=null});
 document.addEventListener("dragend",()=>{dragId=null;render()});
+
+/* ---- sync (Supabase) ---- */
+const SYNC={url:"",key:""},SK="gilded-sync-v1",LTS="gilded-ts-v1";
+let cfg=LS(SK,null);if(!cfg||!cfg.url)cfg={url:SYNC.url,key:SYNC.key};
+let sbc=null,user=null,dirty=false,applying=false,pushT=null,syncMsg="",pulling=false;
+const syn=document.createElement("div");syn.id="syn";syn.hidden=true;document.body.appendChild(syn);
+function setMsg(m){syncMsg=m;const el=document.getElementById("synmsg");if(el)el.textContent=m;const b=document.querySelector('[data-a="sync"]');if(b)b.textContent="Sync "+(user?"●":"○")}
+function mark(){if(applying)return;SV(LTS,Date.now());dirty=true;clearTimeout(pushT);if(sbc&&user)pushT=setTimeout(push,1500)}
+const snap=()=>({S,mine,hid,skips,colors,cals,bg});
+const busy=()=>{const a=document.activeElement;return !modal.hidden||(a&&(a.isContentEditable||/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)))};
+async function push(){if(!sbc||!user)return;const ts=LS(LTS,0)||Date.now();SV(LTS,ts);
+ const {error}=await sbc.from("boards").upsert({user_id:user.id,data:{...snap(),ts},updated_at:new Date().toISOString()});
+ if(error)setMsg("Sync error: "+error.message);else{dirty=false;setMsg("Synced "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))}}
+function applyRemote(b){applying=true;
+ if(b.S)S=b.S;mine=b.mine||[];Object.keys(hid).forEach(k=>delete hid[k]);Object.assign(hid,b.hid||{});Object.keys(skips).forEach(k=>delete skips[k]);Object.assign(skips,b.skips||{});
+ colors=b.colors||{};if(b.cals)cals=b.cals;Object.keys(parsed).forEach(k=>delete parsed[k]);if(b.bg)bg=b.bg;
+ save();saveMine();saveHid();saveColors();saveCals();saveBg();SV(LTS,b.ts||Date.now());applying=false;dirty=false;
+ applyBg();document.title=S.title;render()}
+async function pull(){if(!sbc||!user||pulling)return;pulling=true;
+ try{const {data,error}=await sbc.from("boards").select("data,updated_at").maybeSingle();
+  if(error){setMsg("Sync error: "+error.message);return}
+  const lt=LS(LTS,0);
+  if(!data){if(lt>0)await push();else setMsg("Signed in. Nothing to sync yet.");return}
+  const rt=(data.data&&data.data.ts)||0;
+  if(rt>lt){if(busy()){setMsg("Update waiting…");return}applyRemote(data.data);setMsg("Synced "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))}
+  else if(lt>rt)await push();else setMsg("Up to date")}
+ finally{pulling=false}}
+function initSync(){sbc=null;user=null;
+ if(!window.supabase||!cfg.url||!cfg.key){setMsg(window.supabase?"Not configured":"Sync library did not load");return}
+ try{sbc=window.supabase.createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true}})}catch(e){setMsg("Bad project URL or key");return}
+ sbc.auth.getSession().then(({data})=>{user=data&&data.session?data.session.user:null;setMsg(user?"Signed in":"Signed out");if(user)pull()})}
+function drawSyn(){
+ const f=(k,l,t,v)=>`<label>${l}<input data-f="${k}" type="${t||"text"}" value="${esc(v||"")}" autocomplete="${k==="pw"?"current-password":k==="em"?"username":"off"}"></label>`;
+ let b;
+ if(!cfg.url||!cfg.key)b=f("url","Supabase project URL","url",cfg.url)+f("key","Anon / publishable key","text",cfg.key)+`<button class="btn" data-sy="cfg">Save</button>`;
+ else if(!user)b=f("em","Email","email")+f("pw","Password","password")+`<button class="btn" data-sy="in">Sign in</button><button class="btn alt" data-sy="chg">Change project</button>`;
+ else b=`<div class="sm">Signed in as ${esc(user.email||"")}</div><button class="btn" data-sy="now">Sync now</button><button class="btn alt" data-sy="out">Sign out</button>`;
+ syn.innerHTML=`<div class="pt">Sync across devices</div>${b}<div class="sm" id="synmsg">${esc(syncMsg)}</div>`}
+syn.addEventListener("click",async e=>{const b=e.target.closest("[data-sy]");if(!b)return;const k=b.dataset.sy,q=n=>(syn.querySelector(`[data-f="${n}"]`)||{value:""}).value;
+ if(k==="cfg"){cfg={url:q("url").trim().replace(/\/+$/,""),key:q("key").trim()};SV(SK,cfg);initSync();drawSyn()}
+ else if(k==="in"){if(!sbc)return;setMsg("Signing in…");const r=await sbc.auth.signInWithPassword({email:q("em").trim(),password:q("pw")});
+  if(r.error)setMsg(r.error.message);else{user=r.data.user;setMsg("Signed in");await pull()}drawSyn()}
+ else if(k==="now"){setMsg("Syncing…");await pull()}
+ else if(k==="out"){await sbc.auth.signOut();user=null;setMsg("Signed out");drawSyn()}
+ else if(k==="chg"){cfg={url:"",key:""};SV(SK,cfg);sbc=null;user=null;drawSyn()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)pull()});
+setInterval(()=>{if(!document.hidden&&!dirty)pull()},30000);
+initSync();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)render()});
 document.title=S.title;applyBg();render();
 </script>
